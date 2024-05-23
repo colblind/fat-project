@@ -1,0 +1,39 @@
+# install dependencies
+FROM python:3.12-alpine AS builder
+
+COPY poetry.lock pyproject.toml ./
+RUN python -m pip install --no-cache-dir poetry==1.8.2 \
+    && poetry export --without-hashes --without dev --with production -f requirements.txt -o requirements.txt
+
+# Run actual container
+FROM python:3.12-slim-bullseye
+
+RUN apt update && \
+    apt install -y gcc libpq-dev && \
+    apt clean && \
+    rm -rf /var/cache/apt/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8
+
+COPY --from=builder requirements.txt /tmp/
+
+RUN pip install -U pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY src/ /src/
+COPY scripts /src/scripts/
+COPY gunicorn /src/gunicorn/
+COPY logging.ini /src/
+COPY alembic.ini /src/
+
+ENV PATH "$PATH:/src/scripts"
+
+RUN useradd -m -d /src -s /bin/bash app \
+    && chown -R app:app /src/* && chmod +x /src/scripts/*
+
+WORKDIR /src
+
+# Start app
+CMD ["./scripts/start-dev.sh"]
