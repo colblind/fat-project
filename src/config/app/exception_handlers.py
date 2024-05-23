@@ -180,9 +180,9 @@ pydantic_exception_to_error_code_map: PydanticExceptionToErrorCodeMap = {
         'http_code': 400,
     },
     'int_from_float': {
-        'type': 'errors.validation.invalid_argument_for_int',
+        'type': 'errors.validation.invalid_argument_for_int_from_float_conversion',
         'http_code': 400,
-    },  # TODO: think `bout more verbose error name
+    },
     'float_type': {
         'type': 'errors.validation.invalid_argument_for_float',
         'http_code': 400,
